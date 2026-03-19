@@ -1,0 +1,19 @@
+{
+  "users": [
+    {
+      "id": "fbef",
+      "name": "rodolfo",
+      "email": "rodolfo@gmail.com",
+      "password": "Prueba1"
+    },
+    {
+      "id": "d3d1",
+      "name": "fofo",
+      "email": "foofo@gmail.com",
+      "password": "1234"
+    }
+  ],
+  "projects": [],
+  "tasks": [],
+  "$schema": "./node_modules/json-server/schema.json"
+}
