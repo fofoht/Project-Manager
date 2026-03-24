@@ -1,10 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useAuth } from "../../context/AuthContext";
 import { useRouter } from "next/navigation";
 import {
   getProjects,
   createProject,
   deleteProject,
+  updateProject,
   getTasksByProject,
   createTask,
   deleteTask,
@@ -14,19 +16,27 @@ import {
 
 
 export default function Dashboard(){
+
+    const { user, logout, isAuthenticated } = useAuth();
     const [projects,setProjects]= useState([]);
     const [newProject, setNewProject]= useState("");
+    const [editingProjectId, setEditingProjectId] = useState(null);
+    const [editedName, setEditedName] = useState("");
     const [confirmDelete, setConfirmDelete] = useState(null);
     const [tasks, setTasks] = useState({});
     const [newTask, setNewTask] = useState({});
     const [confirmDeleteTask, setConfirmDeleteTask] = useState(null);
     const router = useRouter();
-
+    
 
 // Cargar proyectos al montar el componente
-    useEffect(()=>{
+    useEffect(() => {
+      if (!isAuthenticated) {
+        router.push("/login");
+      } else {
         loadProjects();
-    },[]);
+      }
+  }, [isAuthenticated]);
 
 // Función para cargar proyectos y sus tareas
     const loadProjects = async()=>{
@@ -46,6 +56,12 @@ export default function Dashboard(){
 
         setNewProject("");
         loadProjects();
+    };
+
+  //Logout
+    const handleLogout = () => {
+      logout();
+      router.push("/login");
     };
 
 // Funcion eliminar proyecto y lo hacemos en cascada para que no queden datos huefanos
@@ -111,52 +127,52 @@ const handleDeleteTask = async (taskId, projectId) => {
   loadTasks(projectId);
 };
 
-// Función para cerrar sesión
-const handleLogout = () => {
-  localStorage.removeItem("user");
-  router.push("/login");
-};
+if (!user) return null;
 
 // Renderizar el dashboard con la lista de proyectos y un formulario para crear nuevos proyectos + btn para eliminar
     return (
         
-        <div className ="p-6">
+        <div className ="min-h-screen bg-gray-100 p-6">
+          <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-800">Dashboard</h1>
 
-                {/* btn logout */}
-            <div className="flex justify-end mb-4">
-                <button
-                    className="bg-red-600 text-white px-4 py-2"
-                    onClick={handleLogout}
-                > Logout</button>
-            </div>
-
-            <h1 className=" flex justify-center text-3xl font-bold mb-7">Dashboard</h1>
-        <div className="flex gap-2 mb-4">
+          <button
+            className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg shadow"
+            onClick={handleLogout}
+          >
+            Logout
+          </button>
+        </div>
+       
+        {user?.role === "gerente" && (
+        <div className="flex gap-3 mb-6 bg-white p-4 rounded-xl shadow items-center">
             <input
-            className="border p-2"
+            className="border border-gray-300 p-2 rounded-lg w-full md:w-1/2 text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
             placeholder ="Nuevo Proyecto"
             value={newProject}
             onChange={(e)=> setNewProject(e.target.value)}/>
 
         <button 
-        className="bg-green-500 text-white px-4"
+        className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg"
         onClick={handleCreateProject}>Crear</button> 
     
         </div>
+        )}
   
         <div> 
   {projects.map((project) => (
     <div
       key={project.id}
-      className="border p-2 mb-2 flex justify-between items-center"
+      className="bg-white p-4 mb-4 rounded-xl shadow flex justify-between items-start gap-4"
     >
       <div className="flex flex-col w-full">
-  <span className="font-bold">{project.name}</span>
+  <span className="font-bold text-black">{project.name}</span>
 
   {/* INPUT PARA CREAR TAREA */}
+  {user?.role === "gerente" && (
   <div className="flex gap-2 mt-2">
     <input
-      className="border p-2"
+      className="border border-gray-300 p-2 rounded-lg flex-1 max-w-md text-gray-800 bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
       placeholder="Nueva tarea"
       value={newTask[project.id] || ""}
       onChange={(e) =>
@@ -166,32 +182,39 @@ const handleLogout = () => {
         })
       }
     />
-
+  
     <button
-      className="bg-blue-500 text-white px-2"
+      className="bg-blue-500 hover:bg-blue-600 text-white px-3 rounded-lg"
       onClick={() => handleCreateTask(project.id)}
     > +</button>
-  </div>
+  </div>)}
 
   {/* LISTA DE TAREAS */}
   <div className="mt-2">
     {(tasks[project.id] || []).map((task) => (
-      <div key={task.id} className="ml-4 flex items-center gap-2">
-        <span>- {task.title}</span>
+      <div key={task.id} className="ml-4 flex items-center gap-3 bg-gray-50 p-2 rounded-lg mt-1">
+        <span className={`text-sm ${
+        task.completed 
+        ? "line-through text-gray-400" 
+        : "text-gray-800 font-medium"
+         }`}>
+      {task.title}
+</span>
         <input
   type="checkbox"
   checked={task.completed}
   onChange={() => handleToggleTask(task, project.id)}
 />
-         <button
-      className="bg-red-500 text-white px-2 text-sm"
+{user?.role === "gerente" && (
+    <button
+      className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 text-sm rounded"
       onClick={() => setConfirmDeleteTask(task.id)}
-    > X</button>
+    > X</button>)}
 
 {confirmDeleteTask === task.id && (
   <div className="flex gap-2 mt-1">
     <button
-      className="bg-red-700 text-white px-2 text-sm"
+      className="bg-red-500 hover:bg-red-600 text-white px-2 py-1 text-sm rounded"
       onClick={() => {
         handleDeleteTask(task.id, project.id);
         setConfirmDeleteTask(null);
@@ -210,31 +233,98 @@ const handleLogout = () => {
     ))}
   </div>
 </div>
+    {user?.role === "gerente" && (
 
-      <div>
-        <button // Primer click muestra confirmación, segundo click elimina
-          className="bg-red-500 text-white px-2"
-          onClick={() => setConfirmDelete(project.id)}
-        >Eliminar </button>
+  <div className="flex flex-col items-end gap-2 min-w-[150px]">
 
-        {confirmDelete === project.id && (
-          <div className="mt-2 flex gap-2">
-            <button
-              className="bg-red-700 text-white px-2"
-              onClick={() => handleDeleteProject(project.id)}
-            >Confirmar </button>
+    <button
+      className="bg-yellow-500 text-white hover:bg-yellow-600 px-3 py-1 text-sm rounded w-full"
+      onClick={() => {
+        setEditingProjectId(project.id);
+        setEditedName(project.name);
+      }}>
+      Editar proyecto
+    </button>
+    <button
+      className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-sm rounded w-full"
+      onClick={() => setConfirmDelete(project.id)}>
+      Eliminar proyecto
+    </button>
 
-            <button
-              className="bg-gray-400 text-white px-2"
-              onClick={() => setConfirmDelete(null)}
-            >Cancelar </button>
-          </div>
-        )}
+    {confirmDelete === project.id && (
+      <div className="bg-red-100 border border-red-300 p-2 rounded-lg w-full">
+        <p className="text-red-700 text-xs mb-2">
+          ¿Seguro que deseas eliminar este proyecto?
+        </p>
+
+        <div className="flex gap-2">
+          <button
+            className="bg-red-700 text-white px-2 py-1 text-sm rounded w-full"
+            onClick={() => handleDeleteProject(project.id)}
+          >
+            Confirmar
+          </button>
+
+          <button
+            className="bg-gray-400 text-white px-2 py-1 text-sm rounded w-full"
+            onClick={() => setConfirmDelete(null)}
+          >
+            Cancelar
+          </button>
+        </div>
       </div>
+    )}
+
+  </div>
+)}
     </div>
   ))}
-</div>
+  </div>
+  
+  {editingProjectId && (
+    //Modal para editar proyecto
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 
+      <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-sm">
+
+        <h2 className="text-lg font-semibold mb-4 text-gray-800">
+          Editar Proyecto
+        </h2>
+
+        <input
+          className="border border-gray-300 p-2 rounded-lg w-full text-gray-800 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          value={editedName}
+          onChange={(e) => setEditedName(e.target.value)}
+        />
+
+        <div className="flex justify-end gap-2">
+          <button
+            className="bg-gray-400 text-white px-4 py-2 rounded-lg"
+            onClick={() => setEditingProjectId(null)}
+          >
+            Cancelar
+          </button>
+
+          <button
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg"
+            onClick={async () => {
+              await updateProject(editingProjectId, {
+                name: editedName,
+              });
+
+              setEditingProjectId(null);
+              setEditedName("");
+              loadProjects();
+            }}
+          >
+            Guardar
+          </button>
+        </div>
+
+      </div>
     </div>
-    ); 
+)}
+    </div>
+  
+  ); 
 }

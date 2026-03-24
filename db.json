@@ -11,9 +11,38 @@
       "name": "fofo",
       "email": "foofo@gmail.com",
       "password": "1234"
+    },
+    {
+      "id": "1",
+      "name": "kat",
+      "email": "kat.admin@gmail.com",
+      "password": "0914",
+      "role": "gerente"
     }
   ],
-  "projects": [],
-  "tasks": [],
+  "projects": [
+    {
+      "name": "Gato",
+      "id": 2
+    },
+    {
+      "name": "Desayuno",
+      "id": 3
+    }
+  ],
+  "tasks": [
+    {
+      "title": "Gatitos",
+      "projectId": 2,
+      "completed": false,
+      "id": 1
+    },
+    {
+      "title": "Huevos",
+      "projectId": 3,
+      "completed": false,
+      "id": 2
+    }
+  ],
   "$schema": "./node_modules/json-server/schema.json"
 }

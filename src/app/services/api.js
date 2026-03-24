@@ -37,6 +37,15 @@ export const deleteProject = async (id) => {
   });
 };
 
+export const updateProject = async (id, updatedProject) => {
+  const res = await fetch(`${API_URL}/projects/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updatedProject),
+  });
+  return res.json();
+};
+
 // TASKS
 //busca todas las tareas
 export const getTasks = async () => {

@@ -10,7 +10,7 @@ export default function Register() {
   const router = useRouter();
 
   const handleRegister = async () => {
-    await registerUser({ name, email, password });
+    await registerUser({ name, email, password, role: "usuario"});
     alert("Usuario creado");
     router.push("/login");
   };
